@@ -1,50 +1,79 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Bar, BarChart, Line, LineChart, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts"
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Bar,
+  BarChart,
+  Line,
+  LineChart,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import { Baby, Feeding } from "@/types";
 
-export function FeedingGraphs({ babies, feedings }) {
-  const [selectedBaby, setSelectedBaby] = useState(babies[0]?.id.toString() || '')
+interface FeedingGraphsProps {
+  babies: Baby[];
+  feedings: Feeding[];
+}
 
-  const filteredFeedings = feedings.filter(feeding => feeding.babyId.toString() === selectedBaby)
+export function FeedingGraphs({ babies, feedings }: FeedingGraphsProps) {
+  const [selectedBaby, setSelectedBaby] = useState(
+    babies[0]?.id.toString() || ""
+  );
 
-  const dailyTotals = filteredFeedings.reduce((acc, feeding) => {
-    const date = new Date(feeding.time).toLocaleDateString()
+  const filteredFeedings = feedings.filter(
+    (feeding) => feeding.babyId.toString() === selectedBaby
+  );
+
+  interface DailyTotals {
+    [date: string]: { bottleAmount: number; breastDuration: number };
+  }
+
+  const dailyTotals = filteredFeedings.reduce<DailyTotals>((acc, feeding) => {
+    const date = new Date(feeding.time).toLocaleDateString();
     if (!acc[date]) {
-      acc[date] = { bottleAmount: 0, breastDuration: 0 }
+      acc[date] = { bottleAmount: 0, breastDuration: 0 };
     }
-    if (feeding.type === 'bottle') {
-      acc[date].bottleAmount += feeding.amount
+    if (feeding.type === "bottle" && feeding.amount) {
+      acc[date].bottleAmount += feeding.amount;
     } else {
-      acc[date].breastDuration += feeding.duration
+      if (feeding.duration) acc[date].breastDuration += feeding.duration;
     }
-    return acc
-  }, {})
+    return acc;
+  }, {});
 
   const barChartData = Object.entries(dailyTotals).map(([date, data]) => ({
     date,
     bottleAmount: data.bottleAmount,
     breastDuration: data.breastDuration,
-  }))
+  }));
 
-  const lineChartData = filteredFeedings.map(feeding => ({
+  const lineChartData = filteredFeedings.map((feeding) => ({
     time: new Date(feeding.time).toLocaleString(),
-    amount: feeding.type === 'bottle' ? feeding.amount : 0,
-    duration: feeding.type === 'breast' ? feeding.duration : 0,
-  }))
+    amount: feeding.type === "bottle" ? feeding.amount : 0,
+    duration: feeding.type === "breast" ? feeding.duration : 0,
+  }));
 
   return (
     <Card className="bg-gradient-to-r from-yellow-100 to-green-100">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold text-indigo-700">Feeding Graphs</CardTitle>
+        <CardTitle className="text-2xl font-bold text-indigo-700">
+          Feeding Graphs
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <Select
-          value={selectedBaby}
-          onValueChange={setSelectedBaby}
-        >
+        <Select value={selectedBaby} onValueChange={setSelectedBaby}>
           <SelectTrigger className="w-[200px] bg-white mb-4">
             <SelectValue placeholder="Select Baby" />
           </SelectTrigger>
@@ -65,8 +94,18 @@ export function FeedingGraphs({ babies, feedings }) {
                 <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
                 <Tooltip />
                 <Legend />
-                <Bar yAxisId="left" dataKey="bottleAmount" fill="#8884d8" name="Bottle (oz)" />
-                <Bar yAxisId="right" dataKey="breastDuration" fill="#82ca9d" name="Breast (min)" />
+                <Bar
+                  yAxisId="left"
+                  dataKey="bottleAmount"
+                  fill="#8884d8"
+                  name="Bottle (oz)"
+                />
+                <Bar
+                  yAxisId="right"
+                  dataKey="breastDuration"
+                  fill="#82ca9d"
+                  name="Breast (min)"
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -78,14 +117,25 @@ export function FeedingGraphs({ babies, feedings }) {
                 <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
                 <Tooltip />
                 <Legend />
-                <Line yAxisId="left" type="monotone" dataKey="amount" stroke="#8884d8" name="Bottle (oz)" />
-                <Line yAxisId="right" type="monotone" dataKey="duration" stroke="#82ca9d" name="Breast (min)" />
+                <Line
+                  yAxisId="left"
+                  type="monotone"
+                  dataKey="amount"
+                  stroke="#8884d8"
+                  name="Bottle (oz)"
+                />
+                <Line
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey="duration"
+                  stroke="#82ca9d"
+                  name="Breast (min)"
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
-
